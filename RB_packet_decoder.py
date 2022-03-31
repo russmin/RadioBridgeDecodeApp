@@ -29,7 +29,7 @@ class Decoder():
     MAGNETOMETER_EVENT = "18"
     VIBRATION_LB_EVENT = "19"
     VIBRATION_HB_EVENT = "1A"
-    decoded = {}
+    
     def Generic_Decoder(self, bytes):
         #ProtocolVersion = (bytes[0] >> 4) & 0x0f
         #PacketCounter = bytes[0] & 0x0f
@@ -71,7 +71,8 @@ class Decoder():
             return "undefined"
 
     def RESET(self, bytes):
-        self.decoded["Event"] = "Reset"
+        decoded = {}
+        decoded["Event"] = "Reset"
         DeviceTypeByte = self.Hex(bytes[2])
         
         if(DeviceTypeByte == '01'):
@@ -128,11 +129,11 @@ class Decoder():
             DeviceType = "Vibration Sensor - High Frequency" 
         else:
             DeviceType = "Device Undefined"
-        self.decoded["Device Type"] =  DeviceType
+        decoded["Device Type"] =  DeviceType
         ## the hardware version has the major version in the upper nibble, and the minor version in the lower nibble   
         HardwareVersion = (bytes[3] >> 4 & 0x0f) + "." + (bytes[3] & 0x0f)
         
-        self.decoded["Hardware Version"] = str(HardwareVersion)
+        decoded["Hardware Version"] = str(HardwareVersion)
 
         ##the firmware version has two different formats depending on the most significant bit
         FirmwareFormat = (bytes[4] >> 7) & 0x01
@@ -144,77 +145,81 @@ class Decoder():
             FirmwareVersion = bytes[4] + "." + bytes[5]
         else:
             FirmwareVersion = ((bytes[4] >> 2) & 0x1F) + "." + ((bytes[4] & 0x03) + ((bytes[5] >> 5) & 0x07)) + "." + (bytes[5] & 0x1F)
-        self.decoded["Firwamre Version"] =  str(FirmwareVersion)
-        return json.dumps(self.decoded)
+        decoded["Firwamre Version"] =  str(FirmwareVersion)
+        return json.dumps(decoded)
 
     def SUPERVISORY(self, bytes):
-        self.decoded["Event"] = "Supervisory"
+        decoded = {}
+        decoded["Event"] = "Supervisory"
         ## note that the sensor state in the supervisory message is being depreciated, so those are not decoded here
         ## battery voltage is in the format x.y volts where x is upper nibble and y is lower nibble4
 
         BatteryLevel = str(((bytes[4] >> 4) & 0x0f)) + "." + str((bytes[4] & 0x0f))
 
-        self.decoded["Battery Voltage"] = str(BatteryLevel) + "V"
+        decoded["Battery Voltage"] = str(BatteryLevel) + "V"
         # the accumulation count is a 16-bit value
         AccumulationCount = (bytes[9] * 256) + bytes[10]
-        self.decoded["Acucumulation Count"] = AccumulationCount
+        decoded["Acucumulation Count"] = AccumulationCount
 
         # decode bits for error code byte
         TamperSinceLastReset = (bytes[2] >> 4) & 0x01
-        self.decoded["Tamper Since Last Reset"] = TamperSinceLastReset
+        decoded["Tamper Since Last Reset"] = TamperSinceLastReset
 
         CurrentTamperState = (bytes[2] >> 3) & 0x01
-        self.decoded["Current Tamper State"] = CurrentTamperState
+        decoded["Current Tamper State"] = CurrentTamperState
 
         ErrorWithLastDownlink = (bytes[2] >> 2) & 0x01
-        self.decoded["Error With Last Downlink"] = ErrorWithLastDownlink
+        decoded["Error With Last Downlink"] = ErrorWithLastDownlink
 
         BatteryLow = (bytes[2] >> 1) & 0x01
-        self.decoded["Battery Low"] = BatteryLow
+        decoded["Battery Low"] = BatteryLow
 
         RadioCommError = bytes[2] & 0x01
-        self.decoded["Radio Comm Error"] = RadioCommError
+        decoded["Radio Comm Error"] = RadioCommError
 
-        return json.dumps(self.decoded)
+        return json.dumps(decoded)
 
     def TAMPER(self, bytes):
-        self.decoded["Event"] = "Tamper"
+        decoded = {}
+        decoded["Event"] = "Tamper"
 
         TamperState = bytes[2]
 
         if (TamperState == 0):
-            self.decoded["State"] = "Open"
+            decoded["State"] = "Open"
         else:
-            self.decoded["State"] = "Closed"
-        return json.dumps(self.decoded)
+            decoded["State"] = "Closed"
+        return json.dumps(decoded)
 
     def LINK_QUALITY(self, bytes):
-        self.decoded["Event"] = "Link Quality"
+        decoded = {}
+        decoded["Event"] = "Link Quality"
 
         CurrentSubBand = bytes[2]
-        self.decoded["Current Sub-Band"] = CurrentSubBand
+        decoded["Current Sub-Band"] = CurrentSubBand
 
         RSSILastDownlink = bytes[3]
-        self.decoded["RSSI of Last Downlink"] = RSSILastDownlink
+        decoded["RSSI of Last Downlink"] = RSSILastDownlink
 
         SNRLastDownlink = bytes[4]
-        self.decoded["SNR of Last Downlink"] = SNRLastDownlink
-        return json.dumps(self.decoded)
+        decoded["SNR of Last Downlink"] = SNRLastDownlink
+        return json.dumps(decoded)
         
     def DOOR_WINDOW(self, bytes):
-        self.decoded["Event"] = "Door/Window"
+        decoded = {}
+        decoded["Event"] = "Door/Window"
 
         SensorState = bytes[2]
 
         if(SensorState == 0):
-            self.decoded["State"] = "Closed"
+            decoded["State"] = "Closed"
         else:
-            self.decoded["State"] = "Open"
-        return json.dumps(self.decoded)
+            decoded["State"] = "Open"
+        return json.dumps(decoded)
 
     def PUSH_BUTTON(self, bytes):
-        
-        self.decoded["Event"] = "Push Event"
+        decoded = {}
+        decoded["Event"] = "Push Event"
         ButtonID = self.Hex(bytes[2])
         if(ButtonID == '01'):
             ButtonReference = "Button 1"
@@ -226,7 +231,7 @@ class Decoder():
             ButtonReference = "Both Buttons"
         else:
             ButtonReference = "Undefined"
-        self.decoded["Button ID"] = ButtonReference
+        decoded["Button ID"] = ButtonReference
         ButtonState = bytes[3]
         if(ButtonState == 0):
             SensorStateDescription = "Pressed"
@@ -236,11 +241,12 @@ class Decoder():
             SensorStateDescription = "Held"
         else:
             SensorStateDescription = "Undefined"
-        self.decoded["Button State"] = SensorStateDescription
-        return json.dumps(self.decoded)
+        decoded["Button State"] = SensorStateDescription
+        return json.dumps(decoded)
 
     def CONTACT(self, bytes):
-        self.decoded["Event"] = "Dry Contact"
+        decoded = {}
+        decoded["Event"] = "Dry Contact"
 
         ContactState = bytes[2]
 
@@ -248,27 +254,29 @@ class Decoder():
             SensorState = "Contacts  Shorted"
         else:
             SensorState = "Contacts Opened"
-        self.decoded["State"] = SensorState
-        return json.dumps(self.decoded)
+        decoded["State"] = SensorState
+        return json.dumps(decoded)
 
     def WATER(self, bytes):
-        self.decoded["Event"] = "Water"
+        decoded = {}
+        decoded["Event"] = "Water"
 
         SensorState = bytes[2]
 
         if(SensorState == 0):
-            self.decoded["State"] = "Water Present"
+            decoded["State"] = "Water Present"
         else:
-            self.decoded["State"] = "Water Not Present"
+            decoded["State"] = "Water Not Present"
         
         WaterRelativeResistance = bytes[3]
 
-        self.decoded["Relative Resistance"] = WaterRelativeResistance
+        decoded["Relative Resistance"] = WaterRelativeResistance
 
-        return json.dumps(self.decoded)
+        return json.dumps(decoded)
 
     def TEMPERATURE(self, bytes):
-        self.decoded["Event"] = "Temperature"
+        decoded = {}
+        decoded["Event"] = "Temperature"
 
         TemperatureEvent = bytes[2];
 
@@ -284,18 +292,19 @@ class Decoder():
             TemperatureEventDescription = "Temperature Report-on-Change Decrease"
         else: TemperatureEventDescription = "Undefined"
         
-        self.decoded["Temperature Event"] =  TemperatureEventDescription
+        decoded["Temperature Event"] =  TemperatureEventDescription
         ## current temperature reading
         CurrentTemperature = self.Convert(bytes[3], 0)
-        self.decoded["Current Temperature"] = CurrentTemperature
+        decoded["Current Temperature"] = CurrentTemperature
 
         ## relative temp measurement for use with an alternative calibration table
         RelativeMeasurement = self.Convert(bytes[4], 0)
-        self.decoded["Relative Measurement"] = RelativeMeasurement
-        return json.dumps(self.decoded)
+        decoded["Relative Measurement"] = RelativeMeasurement
+        return json.dumps(decoded)
 
     def TILT(self, bytes):
-        self.decoded["Event"] = "Tilt"
+        decoded = {}
+        decoded["Event"] = "Tilt"
 
         TiltEvent = bytes[2]
 
@@ -309,16 +318,17 @@ class Decoder():
             TiltEventDescription = "Report-on-Change Toward Horizontal"
         else: 
             TiltEventDescription = "Undefined"
-        self.decoded["Tilt Event"] = TiltEventDescription
+        decoded["Tilt Event"] = TiltEventDescription
 
         TiltAngle = bytes[3]
 
-        self.decoded["Tilt Angle"] = TiltAngle
+        decoded["Tilt Angle"] = TiltAngle
 
-        return self.decoded
+        return decoded
 
     def ATH(self, bytes):
-        self.decoded["Event"] = "Air Temperature/Humidity"
+        decoded = {}
+        decoded["Event"] = "Air Temperature/Humidity"
 
         ATHEvent = bytes[2]
 
@@ -343,19 +353,20 @@ class Decoder():
         else:
             ATHDescription = "Undefined"
         
-        self.decoded["ATH Event"] = ATHDescription
+        decoded["ATH Event"] = ATHDescription
 
         ## integer and fractional values between two bytes
         Temperature = self.Convert((bytes[3]) + ((bytes[4] >> 4) / 10), 1);
-        self.decoded["Temperature"] = Temperature
+        decoded["Temperature"] = Temperature
 
         Humidity = +(bytes[5] + ((bytes[6]>>4) / 10)).toFixed(1);
-        self.decoded["Humidity"] = Humidity
+        decoded["Humidity"] = Humidity
 
-        return json.dumps(self.decoded)
+        return json.dumps(decoded)
 
     def ABM(self, bytes):
-        self.decoded["Event"] = "Acceleration-Based movement"
+        decoded = {}
+        decoded["Event"] = "Acceleration-Based movement"
 
         ABMEvent = bytes[2]
 
@@ -364,11 +375,12 @@ class Decoder():
         else:
             ABMEventDescription = "Movement Stopped"
         
-        self.decoded["ABM Event"] =  ABMEventDescription
-        return json.dumps(self.decoded)
+        decoded["ABM Event"] =  ABMEventDescription
+        return json.dumps(decoded)
 
     def TILT(self, bytes):
-        self.decoded["events"] = "High-Precision Tilt"
+        decoded = {}
+        decoded["events"] = "High-Precision Tilt"
 
         TiltEvent = bytes[2]
 
@@ -384,19 +396,20 @@ class Decoder():
             TiltEventDescription = "Report-on-Change Away From 0-Degree Vertical Orientation"
         else:
             TiltEventDescription = "Undefined"
-        self.decoded["Tilt HP Event"] =  TiltEventDescription
+        decoded["Tilt HP Event"] =  TiltEventDescription
 
         ## integer and fractional values between two bytes
         Angle = +round((bytes[3] + bytes[4] / 10), 1)
-        self.decoded["Angle"] = Angle
+        decoded["Angle"] = Angle
 
         Temperature = self.Convert(bytes[5], 0)
-        self.decoded["Temperature"] = Temperature
+        decoded["Temperature"] = Temperature
 
-        return json.dumps(self.decoded)
+        return json.dumps(decoded)
 
     def ULTRASONIC(self, bytes):
-        self.decoded["Event"] = "Ultrasonic Level"
+        decoded = {}
+        decoded["Event"] = "Ultrasonic Level"
 
         UltrasonicEvent = bytes[2]
 
@@ -413,18 +426,18 @@ class Decoder():
         else:
             UltrasonicEventDescription = "Undefined"
 
-        self.decoded["Ultrasonic Event"] = UltrasonicEventDescription
+        decoded["Ultrasonic Event"] = UltrasonicEventDescription
 
         #  distance is calculated across 16-bits
         Distance = ((bytes[3] * 256) + bytes[4])
 
-        self.decoded["Distance"] = Distance
+        decoded["Distance"] = Distance
 
-        return json.dumps(self.decoded)
+        return json.dumps(decoded)
 
     def SENSOR420MA(self, bytes):
-
-        self.decoded["Event"] = "4-20mA"
+        decoded = {}
+        decoded["Event"] = "4-20mA"
 
         Sensor420mAEvent = bytes[2]
 
@@ -441,17 +454,17 @@ class Decoder():
         else:
             Sensor420mAEventDescription = "Undefined"
 
-        self.decoded["4-20mA Event"] = Sensor420mAEventDescription
+        decoded["4-20mA Event"] = Sensor420mAEventDescription
 
         Analog420Measurement = ((bytes[3] * 256) + bytes[4]) / 100
 
-        self.decoded["Current Measurement in mA"] = Analog420Measurement
+        decoded["Current Measurement in mA"] = Analog420Measurement
 
-        return json.dumps(self.decoded)
+        return json.dumps(decoded)
 
     def THERMOCOUPLE(self, bytes):
-
-        self.decoded["Event"] = "Thermocouple"
+        decoded = {}
+        decoded["Event"] = "Thermocouple"
 
         ThermocoupleEvent = bytes[2]
 
@@ -468,11 +481,11 @@ class Decoder():
         else:
             ThermocoupleEventDescription = "Undefined"
 
-        self.decoded["Thermacouple Event"] = ThermocoupleEventDescription
+        decoded["Thermacouple Event"] = ThermocoupleEventDescription
 
         Tempertature = int(((bytes[3] *256) + bytes[4]) / 16)
 
-        self.decoded["Temperature"] =  str(Tempertature) + "C"
+        decoded["Temperature"] =  str(Tempertature) + "C"
 
         Faults = bytes[5]
 
@@ -486,36 +499,36 @@ class Decoder():
         FaultOpenCircuit = Faults & 0x01
 
         if (Faults == 0):
-            self.decoded["Fault"] += "None"
+            decoded["Fault"] += "None"
         else:
             if (FaultColdOutsideRange):
-                self.decoded["Fault"] = "The cold-Junction temperature is outside of the normal operating range"
+                decoded["Fault"] = "The cold-Junction temperature is outside of the normal operating range"
 
             elif (FaultHotOutsideRange):
-                self.decoded["Fault"] = "The hot junction temperature is outside of the normal operating range"
+                decoded["Fault"] = "The hot junction temperature is outside of the normal operating range"
 
             elif (FaultColdAboveThresh):
-                self.decoded["Fault"] = "The cold-Junction temperature is at or above than the cold-junction temperature high threshold"
+                decoded["Fault"] = "The cold-Junction temperature is at or above than the cold-junction temperature high threshold"
 
             elif (FaultColdBelowThresh):
-                self.decoded["Fault"] = "The Cold-Junction temperature is lower than the cold-junction temperature low threshold"
+                decoded["Fault"] = "The Cold-Junction temperature is lower than the cold-junction temperature low threshold"
 
             elif (FaultTCTooHigh):
-                self.decoded["Fault"] = "The thermocouple temperature is too high"
+                decoded["Fault"] = "The thermocouple temperature is too high"
 
             elif (FaultTCTooLow):
-                self.decoded["Fault"] = "Thermocouple temperature is too low"
+                decoded["Fault"] = "Thermocouple temperature is too low"
 
             elif (FaultVoltageOutsideRange):
-                self.decoded["Fault"] = "The input voltage is negative or greater than VDD"
+                decoded["Fault"] = "The input voltage is negative or greater than VDD"
 
             elif (FaultOpenCircuit):
-                self.decoded["Fault"] = "An open circuit such as broken thermocouple wires has been detected"
-        return json.dumps(self.decoded)
+                decoded["Fault"] = "An open circuit such as broken thermocouple wires has been detected"
+        return json.dumps(decoded)
     
     def DOWNLINK_ACK(self, bytes):
-
-        self.decoded["Event"] = "Downlink Acknowledge"
+        decoded = {}
+        decoded["Event"] = "Downlink Acknowledge"
 
         DownLinkEvent = bytes[2]
         if(DownLinkEvent == 1):
@@ -523,9 +536,9 @@ class Decoder():
         else:
             DownlinkEventDescription = "Message Valid"
         
-        self.decoded["Downlink"] = DownlinkEventDescription
+        decoded["Downlink"] = DownlinkEventDescription
         
-        return json.dumps(self.decoded)
+        return json.dumps(decoded)
 
         
     def Hex(self,decimal):

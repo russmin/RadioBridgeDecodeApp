@@ -2,7 +2,7 @@
 
 import time
 import io, json
-from turtle import up				#needed for exporting payloads to json file
+from RB_packet_decoder import Decoder				#needed for exporting payloads to json file
 import paho.mqtt.client as mqtt  
 from RB_packet_decoder import Decoder 
 import argparse
@@ -27,7 +27,7 @@ class mqttStoreForward:
 	devEUI = None
 	##User Information
 	remote_broker_address= '192.168.2.164'
-	remote_topic = 'lorawan/' + devEUI + "/up"
+	remote_topic = "lorawan/up"
 	decode_topic = None
 	remote_user = 'russmin'
 	remote_password = 'Taemin26!'
@@ -79,8 +79,7 @@ class mqttStoreForward:
 		self.devEUI = pkt["deveui"]
 		self.payloadData = pkt["payload"]
 		self.bytes = bytearray.fromhex(self.payloadData)
-		
-
+		self.decode_topic = "lorawan/" + self.devEUI + "/decode"
 		print(self.packet)
 		self.remote_client.publish(self.remote_topic, payload=self.packet, qos=0)
 		DECODE = Decoder()
