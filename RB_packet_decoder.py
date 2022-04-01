@@ -155,7 +155,7 @@ class Decoder():
         ## battery voltage is in the format x.y volts where x is upper nibble and y is lower nibble4
 
         BatteryLevel = str(((bytes[4] >> 4) & 0x0f)) + "." + str((bytes[4] & 0x0f))
-
+        Text = ["yes", "no"]
         decoded["Battery Voltage"] = str(BatteryLevel) + "V"
         # the accumulation count is a 16-bit value
         AccumulationCount = (bytes[9] * 256) + bytes[10]
@@ -163,19 +163,24 @@ class Decoder():
 
         # decode bits for error code byte
         TamperSinceLastReset = (bytes[2] >> 4) & 0x01
-        decoded["Tamper Since Last Reset"] = TamperSinceLastReset
+        if(Text[TamperSinceLastReset] != "no"):
+            decoded["Tamper Since Last Reset"] = TamperSinceLastReset
 
         CurrentTamperState = (bytes[2] >> 3) & 0x01
-        decoded["Current Tamper State"] = CurrentTamperState
+        if(Text[CurrentTamperState] != "no"):
+            decoded["Current Tamper State"] = CurrentTamperState
 
         ErrorWithLastDownlink = (bytes[2] >> 2) & 0x01
-        decoded["Error With Last Downlink"] = ErrorWithLastDownlink
+        if(Text[ErrorWithLastDownlink] != "no"):
+            decoded["Error With Last Downlink"] = ErrorWithLastDownlink
 
         BatteryLow = (bytes[2] >> 1) & 0x01
-        decoded["Battery Low"] = BatteryLow
+        if(Text[BatteryLow] != "no"):
+            decoded["Battery Low"] = BatteryLow
 
         RadioCommError = bytes[2] & 0x01
-        decoded["Radio Comm Error"] = RadioCommError
+        if(Text[RadioCommError] != "no"):
+            decoded["Radio Comm Error"] = RadioCommError
 
         return json.dumps(decoded)
 
@@ -221,27 +226,13 @@ class Decoder():
         decoded = {}
         decoded["Event"] = "Push Event"
         ButtonID = self.Hex(bytes[2])
-        if(ButtonID == '01'):
-            ButtonReference = "Button 1"
-        elif(ButtonID == '02'):    
-            ButtonReference = "Button 2"
-        elif(ButtonID == '03'):
-            ButtonReference = "Button 1"
-        elif(ButtonID == '12'):
-            ButtonReference = "Both Buttons"
-        else:
-            ButtonReference = "Undefined"
-        decoded["Button ID"] = ButtonReference
+        BI = [0, "Button 1 (Right)", "Button 2 (Left)", "Single Button",0, 0, 0, 0, 0, 0, 0, 0, "Both Buttons" ]
+
+        decoded["Button ID"] = BI[ButtonID]
         ButtonState = bytes[3]
-        if(ButtonState == 0):
-            SensorStateDescription = "Pressed"
-        elif(ButtonState == 1):
-            SensorStateDescription = "Released"
-        elif(ButtonState == 2):
-            SensorStateDescription = "Held"
-        else:
-            SensorStateDescription = "Undefined"
-        decoded["Button State"] = SensorStateDescription
+        BS = ["Pressed", "Released", "Held"]
+        
+        decoded["Button State"] = BS[ButtonState]
         return json.dumps(decoded)
 
     def CONTACT(self, bytes):
@@ -279,20 +270,9 @@ class Decoder():
         decoded["Event"] = "Temperature"
 
         TemperatureEvent = bytes[2];
-
-        if (TemperatureEvent == 0):
-            TemperatureEventDescription = "Periodic Report"
-        elif (TemperatureEvent == 1):
-            TemperatureEventDescription = "Temperature Over Upper Threshold"
-        elif (TemperatureEvent == 2):
-            TemperatureEventDescription = "Temperature Under Lower Threshold"
-        elif (TemperatureEvent == 3):
-            TemperatureEventDescription = "Temperature Report-on-Change Increase"
-        elif (TemperatureEvent == 4):
-            TemperatureEventDescription = "Temperature Report-on-Change Decrease"
-        else: TemperatureEventDescription = "Undefined"
+        Text =["Periodic Report", "Above Upper Threshold", "Below Lower Threshold", "Change Increase", "Change Decrease", "Fault"]
         
-        decoded["Temperature Event"] =  TemperatureEventDescription
+        decoded["Temperature Event"] =  Text[TemperatureEvent]
         ## current temperature reading
         CurrentTemperature = self.Convert(bytes[3], 0)
         decoded["Current Temperature"] = CurrentTemperature
@@ -331,29 +311,9 @@ class Decoder():
         decoded["Event"] = "Air Temperature/Humidity"
 
         ATHEvent = bytes[2]
+        Text = ["Periodic Report", "Temperature Above Upper Threshold", "Temperature Below Lower Threshold", "Temperature Change Increase", "Temperature Change Decrease","Humidity Above Upper Threhsold", "Humidity Below Lower Threshold", "Humidity Change Increase", "Humidity Change Decrease"]
 
-        if (ATHEvent == 0):
-            ATHDescription = "Periodic Report"
-        elif(ATHEvent == 1): 
-            ATHDescription = "Temperature has Risen Above Upper Threshold"
-        elif(ATHEvent == 2):
-            ATHDescription = "Temperature has Fallen Below Lower Threshold"
-        elif(ATHEvent == 3):
-            ATHDescription = "Temperature Report-on-Change Increase"
-        elif(ATHEvent == 4):
-            ATHDescription = "Temperature Report-on-Change Decrease"
-        elif(ATHEvent == 5):
-            ATHDescription = "Humidity has Risen Above Upper Threshold"
-        elif(ATHEvent == 6):
-            ATHDescription = "Humidity has Fallen Below Lower Threshold"
-        elif(ATHEvent == 7):
-            ATHDescription = "Humidity Report-on-Change Increase"
-        elif(ATHEvent == 8):
-            ATHDescription = "Humidity Report-on-Change Decrease"
-        else:
-            ATHDescription = "Undefined"
-        
-        decoded["ATH Event"] = ATHDescription
+        decoded["ATH Event"] = Text[ATHEvent]
 
         ## integer and fractional values between two bytes
         Temperature = self.Convert((bytes[3]) + ((bytes[4] >> 4) / 10), 1);
@@ -383,21 +343,10 @@ class Decoder():
         decoded["events"] = "High-Precision Tilt"
 
         TiltEvent = bytes[2]
+        Text = ["Periodic Report", "Vertical Tansition", "Horizontal Transition",
+            "Change Towoard Vertical", "Change Toward Horizontal"]
 
-        if(TiltEvent == 0):
-            TiltEventDescription = "Periodic Report"
-        elif(TiltEvent == 1):
-            TiltEventDescription = "Transitioned Toward 0-Degree Vertical Orientation"
-        elif(TiltEvent == 2):
-            TiltEventDescription = "Transitioned Away From 0-Degree Vertical Orientation"
-        elif(TiltEvent == 3):
-            TiltEventDescription = "Report-on-Change Toward 0-Degree Vertical Orientation"
-        elif(TiltEvent == 4):
-            TiltEventDescription = "Report-on-Change Away From 0-Degree Vertical Orientation"
-        else:
-            TiltEventDescription = "Undefined"
-        decoded["Tilt HP Event"] =  TiltEventDescription
-
+        decoded["Tilt HP Event"] =  Text[TiltEvent]
         ## integer and fractional values between two bytes
         Angle = +round((bytes[3] + bytes[4] / 10), 1)
         decoded["Angle"] = Angle
@@ -412,7 +361,6 @@ class Decoder():
         decoded["Event"] = "Ultrasonic Level"
 
         UltrasonicEvent = bytes[2]
-
         if(UltrasonicEvent == 0):
             UltrasonicEventDescription = "Periodic Report"
         elif(UltrasonicEvent == 1):
@@ -548,11 +496,11 @@ class Decoder():
     def Convert(self, number, mode):
         if(mode == 0):
             if (number > 127):
-                result = number - 256
+                result = +round(number - 256, 1)
             else:
                 result = number
         if(mode == 1):
-            if (number >127):
+            if (number > 127):
                 result = -+round((number - 128), 1)
             else:
                 result = +round(number, 1)

@@ -4,7 +4,6 @@ import time
 import io, json
 from RB_packet_decoder import Decoder				#needed for exporting payloads to json file
 import paho.mqtt.client as mqtt  
-from RB_packet_decoder import Decoder 
 import argparse
 import logging
 import base64
@@ -72,7 +71,7 @@ class mqttStoreForward:
 		newMsg["deveui"] = msgObj["deveui"]
 		return json.dumps(newMsg)
 
-	#call back function initiated on on_message
+	#call back function initiated on on_messageF
 	def onMessage(self, mqtt_client, userdata, msg):
 		self.packet = self.rbPayloadFormatters(msg.payload)
 		pkt = json.loads(self.packet)
